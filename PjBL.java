@@ -182,7 +182,7 @@ class GUI {
     public void exibirJanela() {
         frame = new JFrame("Comparador de Contas");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        frame.setSize(1280, 960);
+        frame.setSize(1024, 768);
 
         mainPanel = new JPanel();
         cardLayout = new CardLayout();

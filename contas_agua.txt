@@ -1,0 +1,3 @@
+Água,Janeiro,15,50.25
+Água,Fevereiro,12,45.80
+Água,Março,18,55.30

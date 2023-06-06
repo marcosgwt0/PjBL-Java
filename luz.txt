@@ -1,0 +1,5 @@
+Energia,Janeiro,140,150.50
+Energia,Fevereiro,180,130.75
+Energia,Março,220,165.80
+Energia,Abril,130,120.50
+Energia,Maio,221,166.80

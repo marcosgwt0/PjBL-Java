@@ -8,6 +8,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
 
 abstract class Conta {
     protected String mes;
@@ -166,12 +168,13 @@ class ComparadorContas {
     }
 }
 
-class GUI {
+    class GUI {
     private ComparadorContas comparadorContas;
     private JFrame frame;
     private JPanel mainPanel;
     private CardLayout cardLayout;
     private DefaultTableModel tableModel;
+    private DefaultTableModel tableModel2;
     private JFileChooser fileChooser;
 
     public GUI() {
@@ -233,26 +236,26 @@ class GUI {
 
     private void exibirResultado(String tipoConta) {
         JPanel panel = new JPanel(new BorderLayout());
-    
-        // Primeiro Painel
+
+        // First Table
         String[] columnNames = {"Mês Anterior", "Mês Atual", "Consumo Anterior (KWh ou m3)", "Consumo Atual (KWh ou m3)", "Custo Anterior", "Custo Atual"};
         tableModel = new DefaultTableModel(columnNames, 0);
 
         tableModel.setRowCount(0);
-    
+
         List<String[]> comparacoes = comparadorContas.getComparacoes();
         for (String[] comparacao : comparacoes) {
             tableModel.addRow(comparacao);
         }
-    
+
         JTable table = new JTable(tableModel);
         JScrollPane scrollPane = new JScrollPane(table);
         panel.add(scrollPane, BorderLayout.PAGE_START);
 
-        // Segundo Painel
+        // Second Table
         String[] columnNames2 = {"Custo Médio", "Consumo Médio", "Consumo Mínimo (KWh ou m3)", "Consumo Máximo (KWh ou m3)", "Custo Mínimo", "Custo Máximo"};
-        DefaultTableModel tableModel2 = new DefaultTableModel(columnNames2, 0);
-    
+        tableModel2 = new DefaultTableModel(columnNames2, 0);
+
         String[] row = new String[6];
 
         double averageCost = comparadorContas.getComparacoes().stream()
@@ -260,71 +263,115 @@ class GUI {
                 .average()
                 .orElse(0.0);
         row[0] = String.format("%.2f", averageCost);
-        
+
         double averagePreviousConsumption = comparadorContas.getComparacoes().stream()
                 .mapToDouble(comparacao -> Double.parseDouble(comparacao[3]))
                 .average()
                 .orElse(0.0);
         row[1] = String.format("%.2f", averagePreviousConsumption);
-        
+
         double minCurrentConsumption = comparadorContas.getComparacoes().stream()
                 .mapToDouble(comparacao -> Double.parseDouble(comparacao[2]))
                 .min()
                 .orElse(0.0);
         row[2] = String.format("%.2f", minCurrentConsumption);
-        
+
         double maxCurrentConsumption = comparadorContas.getComparacoes().stream()
                 .mapToDouble(comparacao -> Double.parseDouble(comparacao[2]))
                 .max()
                 .orElse(0.0);
         row[3] = String.format("%.2f", maxCurrentConsumption);
-        
+
         double minVariationConsumption = comparadorContas.getComparacoes().stream()
                 .mapToDouble(comparacao -> Double.parseDouble(comparacao[4]))
                 .min()
                 .orElse(0.0);
         row[4] = String.format("%.2f", minVariationConsumption);
-        
+
         double maxVariationConsumption = comparadorContas.getComparacoes().stream()
                 .mapToDouble(comparacao -> Double.parseDouble(comparacao[4]))
                 .max()
                 .orElse(0.0);
         row[5] = String.format("%.2f", maxVariationConsumption);
-        
 
-    
         tableModel2.addRow(row);
 
         JTable table2 = new JTable(tableModel2);
         JScrollPane scrollPane2 = new JScrollPane(table2);
-        
+
         JTextArea messageArea = new JTextArea(comparadorContas.getMessage());
         messageArea.setEditable(false);
         messageArea.setLineWrap(true);
         messageArea.setWrapStyleWord(true);
         JScrollPane messageScrollPane = new JScrollPane(messageArea);
-        
-        // Painel para caixa de mensagem
+
+        // Panel for the message box
         JPanel innerPanel = new JPanel();
         innerPanel.setLayout(new BoxLayout(innerPanel, BoxLayout.Y_AXIS));
         innerPanel.add(scrollPane2);
         innerPanel.add(messageScrollPane);
-        
+
         panel.add(innerPanel, BorderLayout.CENTER);
-        
-        // Cria um botão para voltar pro menu
+
+        // Create a button to save the table data to a file
+        JButton saveButton = new JButton("Salvar");
+        saveButton.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                saveTableData();
+            }
+        });
+        panel.add(saveButton, BorderLayout.PAGE_END);
+
+        // Create a button to go back to the menu
         JButton backButton = new JButton("Voltar ao Menu");
         backButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 tableModel.setRowCount(0);
+                tableModel2.setRowCount(0); // Clear the second table as well
                 cardLayout.show(mainPanel, "menu");
             }
         });
         panel.add(backButton, BorderLayout.PAGE_END);
-        
+
         mainPanel.add(panel, tipoConta);
         cardLayout.show(mainPanel, tipoConta);
-        
+    }
+
+    private void saveTableData() {
+        int returnValue = fileChooser.showSaveDialog(frame);
+        if (returnValue == JFileChooser.APPROVE_OPTION) {
+            String nomeArquivo = fileChooser.getSelectedFile().getPath();
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(nomeArquivo))) {
+                // Write the data from the first table
+                for (int i = 0; i < tableModel.getRowCount(); i++) {
+                    for (int j = 0; j < tableModel.getColumnCount(); j++) {
+                        writer.write(tableModel.getValueAt(i, j).toString());
+                        if (j < tableModel.getColumnCount() - 1) {
+                            writer.write(",");
+                        }
+                    }
+                    writer.newLine();
+                }
+
+                // Add an empty line to separate the tables
+                writer.newLine();
+
+                // Write the data from the second table
+                for (int i = 0; i < tableModel2.getRowCount(); i++) {
+                    for (int j = 0; j < tableModel2.getColumnCount(); j++) {
+                        writer.write(tableModel2.getValueAt(i, j).toString());
+                        if (j < tableModel2.getColumnCount() - 1) {
+                            writer.write(",");
+                        }
+                    }
+                    writer.newLine();
+                }
+
+                System.out.println("Data saved successfully to the file: " + nomeArquivo);
+            } catch (IOException ex) {
+                System.out.println("Error saving table data: " + ex.getMessage());
+            }
+        }
     }
 }
 

@@ -23,11 +23,6 @@ abstract class Conta {
     }
 
     public abstract void exibirConta();
-
-    @Override
-    public String toString() {
-        return "Conta [mes=" + mes + ", consumo=" + consumo + ", custo=" + custo + "]";
-    }
 }
 
 class ContaEnergia extends Conta {
@@ -39,12 +34,7 @@ class ContaEnergia extends Conta {
         System.out.println("Conta de Energia - " + mes);
         System.out.println("Consumo: " + consumo + " kWh");
         System.out.println("Custo: R$" + custo);
-        System.out.println();
-    }
-
-    @Override
-    public String toString() {
-        return "ContaEnergia [mes=" + mes + ", consumo=" + consumo + ", custo=" + custo + "]";
+        System.out.println("----------------------------");
     }
 }
 
@@ -57,12 +47,7 @@ class ContaAgua extends Conta {
         System.out.println("Conta de Água - " + mes);
         System.out.println("Consumo: " + consumo + " m³");
         System.out.println("Custo: R$" + custo);
-        System.out.println();
-    }
-
-    @Override
-    public String toString() {
-        return "ContaAgua [mes=" + mes + ", consumo=" + consumo + ", custo=" + custo + "]";
+        System.out.println("----------------------------");
     }
 }
 
@@ -88,13 +73,15 @@ class ComparadorContas {
     }
 
     public void carregarContas(String nomeArquivo) {
+        contas.clear();
+        comparacoes.clear();
         try (BufferedReader leitor = new BufferedReader(new FileReader(nomeArquivo))) {
             String linha;
             while ((linha = leitor.readLine()) != null) {
                 String[] partes = linha.split(",");
-            if (partes.length != 4) {
-                throw new FormatoInvalidoException("Formato de linha inválido: " + linha);
-            }
+                if (partes.length != 4) {
+                    throw new FormatoInvalidoException("Formato de linha inválido: " + linha);
+                }
                 String tipoConta = partes[0];
                 String mes = partes[1];
                 double consumo = Double.parseDouble(partes[2]);
@@ -106,9 +93,16 @@ class ComparadorContas {
                     contas.add(new ContaAgua(mes, consumo, custo));
                 }
             }
+
+            // Display the loaded data
+            System.out.println("----------------------------");
+            for (Conta conta : contas) {
+                conta.exibirConta();
+            }
+
             System.out.println("Contas carregadas com sucesso.");
             calcularMediaConsumo();
-         } catch (IOException | NumberFormatException e) {
+        } catch (IOException | NumberFormatException e) {
             System.out.println("Erro ao carregar as contas: " + e.getMessage());
         } catch (FormatoInvalidoException e) {
             System.out.println("Erro de formato: " + e.getMessage());
@@ -258,23 +252,8 @@ class ComparadorContas {
         });
         panel.add(buttonAgua);
 
-        JButton buttonCalculator = new JButton("Calculadora");
-        buttonCalculator.addActionListener(new ActionListener() {
-        public void actionPerformed(ActionEvent e) {
-            showCalculator();
-        }
-    });
-    panel.add(buttonCalculator);
-
         return panel;
     }
-
-    private void showCalculator() {
-    CalculatorExtension calculator = new CalculatorExtension();
-    JPanel calculatorPanel = calculator.getCalculatorPanel();
-    mainPanel.add(calculatorPanel, "calculator");
-    cardLayout.show(mainPanel, "calculator");
-}
 
     private void carregarContas(String tipoConta) {
         int returnValue = fileChooser.showOpenDialog(frame);
@@ -382,6 +361,7 @@ class ComparadorContas {
         });
         buttonsPanel.add(backButton);
 
+
         panel.add(buttonsPanel, BorderLayout.PAGE_END);
 
         mainPanel.add(panel, tipoConta);
@@ -422,194 +402,6 @@ class ComparadorContas {
                 System.out.println("Error saving table data: " + ex.getMessage());
             }
         }
-    }
-}
-
-    class CalculatorExtension extends GUI {
-    private JPanel calculatorPanel;
-    private JTextField numField1;
-    private JTextField numField2;
-    private JTextField resultField;
-    private JButton addButton;
-    private JButton subtractButton;
-    private JButton multiplyButton;
-    private JButton divideButton;
-    private JButton sqrtButton;
-    private JButton powerButton;
-
-    public CalculatorExtension() {
-        calculatorPanel = createCalculatorPanel();
-    }
-
-    public JPanel getCalculatorPanel() {
-        return calculatorPanel;
-    }
-
-    private JPanel createCalculatorPanel() {
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridBagLayout());
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.insets = new Insets(5, 5, 5, 5);
-
-        JLabel label1 = new JLabel("Number 1:");
-        numField1 = new JTextField(10);
-
-        JLabel label2 = new JLabel("Number 2:");
-        numField2 = new JTextField(10);
-
-        JLabel resultLabel = new JLabel("Result:");
-        resultField = new JTextField(10);
-        resultField.setEditable(false);
-
-        addButton = new JButton("+");
-        subtractButton = new JButton("-");
-        multiplyButton = new JButton("*");
-        divideButton = new JButton("/");
-        sqrtButton = new JButton("√");
-        powerButton = new JButton("^");
-
-        addButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                calculateResult(Operation.ADD);
-            }
-        });
-
-        subtractButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                calculateResult(Operation.SUBTRACT);
-            }
-        });
-
-        multiplyButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                calculateResult(Operation.MULTIPLY);
-            }
-        });
-
-        divideButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                calculateResult(Operation.DIVIDE);
-            }
-        });
-
-        sqrtButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                calculateResult(Operation.SQUARE_ROOT);
-            }
-        });
-
-        powerButton.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {
-                calculateResult(Operation.POWER);
-            }
-        });
-
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        panel.add(label1, constraints);
-
-        constraints.gridx = 1;
-        panel.add(numField1, constraints);
-
-        constraints.gridx = 2;
-        panel.add(addButton, constraints);
-
-        constraints.gridx = 3;
-        panel.add(subtractButton, constraints);
-
-        constraints.gridx = 0;
-        constraints.gridy = 1;
-        panel.add(label2, constraints);
-
-        constraints.gridx = 1;
-        panel.add(numField2, constraints);
-
-        constraints.gridx = 2;
-        panel.add(multiplyButton, constraints);
-
-        constraints.gridx = 3;
-        panel.add(divideButton, constraints);
-
-        constraints.gridx = 0;
-        constraints.gridy = 2;
-        panel.add(resultLabel, constraints);
-
-        constraints.gridx = 1;
-        panel.add(resultField, constraints);
-
-        constraints.gridx = 2;
-        panel.add(sqrtButton, constraints);
-
-        constraints.gridx = 3;
-        panel.add(powerButton, constraints);
-
-        return panel;
-    }
-
-        private void calculateResult(Operation operation) {
-        String input1 = numField1.getText();
-        String input2 = numField2.getText();
-        double num1 = parseDouble(input1);
-        double num2 = parseDouble(input2);
-        double result = 0;
-
-        switch (operation) {
-            case ADD:
-                result = num1 + num2;
-                break;
-            case SUBTRACT:
-                result = num1 - num2;
-                break;
-            case MULTIPLY:
-                result = num1 * num2;
-                break;
-            case DIVIDE:
-                result = num1 / num2;
-                break;
-            case SQUARE_ROOT:
-                result = Math.sqrt(num1);
-                break;
-            case POWER:
-                result = Math.pow(num1, num2);
-                break;
-        }
-
-        boolean isFloatResult = operation != Operation.SQUARE_ROOT && (isFloat(num1) || isFloat(num2));
-        String formattedResult = formatResult(result, isFloatResult, operation);
-
-        resultField.setText(formattedResult);
-    }
-
-    private String formatResult(double result, boolean isFloatResult, Operation operation) {
-        if (isFloatResult || operation == Operation.SQUARE_ROOT) {
-            return String.format("%.4f", result);
-        } else if (result % 1 == 0) {
-            return String.valueOf((int) result);
-        } else {
-            return String.valueOf(result);
-        }
-    }
-
-    private double parseDouble(String input) {
-        try {
-            return Double.parseDouble(input);
-        } catch (NumberFormatException e) {
-            return 0;
-        }
-    }
-
-    private boolean isFloat(double value) {
-        return value != (int) value;
-    }
-
-    private enum Operation {
-        ADD,
-        SUBTRACT,
-        MULTIPLY,
-        DIVIDE,
-        SQUARE_ROOT,
-        POWER
     }
 }
 
